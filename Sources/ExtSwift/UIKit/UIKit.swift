@@ -138,6 +138,24 @@ public extension UIColor {
     }
 }
 
+// MARK: UIImage
+
+public extension UIImage {
+    
+    static func image(with color: UIColor, size: CGSize = CGSize(width: 1.0, height: 1.0)) -> UIImage? {
+        let rect = CGRect(origin: .zero, size: size)
+        return UIGraphicsImageRenderer(size: rect.size).image { context in
+            color.setFill()
+            context.fill(rect)
+        }
+    }
+    
+    func resizableImage() -> UIImage {
+        let x = max(0.0, size.width / 2.0 - 1.0), y = max(0.0, size.height / 2.0 - 1.0)
+        return resizableImage(withCapInsets: UIEdgeInsets(top: y, left: x, bottom: y, right: x))
+    }
+}
+
 // MARK: UIEdgeInsets
 
 public extension UIEdgeInsets {

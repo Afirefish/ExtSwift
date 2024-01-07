@@ -15,6 +15,8 @@ import ExtSwift
 
 final class UIKitTests: XCTestCase {
     
+    
+    @available(iOS 15, *)
     func testAttributedString() {
         let a: AttributedString = "text" | AttributeContainer()
             .font(UIFont.monospacedSystemFont(ofSize: 14.0, weight: .bold))
