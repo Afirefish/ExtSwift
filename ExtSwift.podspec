@@ -13,10 +13,10 @@ Pod::Spec.new do |s|
     s.social_media_url = "https://iwill.im/about/"
     
     # ――― Platform Specifics ――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
-    s.ios.deployment_target = "15.0"
-    s.tvos.deployment_target = "15.0"
+    s.ios.deployment_target = "13.0"
+    s.tvos.deployment_target = "13.0"
     # s.osx.deployment_target = "12.0"
-    s.swift_version = "5.9"
+    s.swift_version = "5.10"
     
     # ――― Source Location ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
     s.source        = { :git => "https://github.com/iwill/ExtSwift.git", :tag => s.version.to_s }
