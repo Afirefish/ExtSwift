@@ -11,13 +11,13 @@ import Foundation
 /// Key-Value Observing
 
 @propertyWrapper
-public class KVO<KVOType> {
+public class KVO<ValueType> {
     
     // MARK: property-wrapper
     
-    public var projectedValue: KVO<KVOType> { self }
+    public var projectedValue: KVO<ValueType> { self }
     
-    public var wrappedValue: KVOType {
+    public var wrappedValue: ValueType {
         willSet {
             let removing = observers.filter { observer in
                 return observer.options.contains(.willSet) && observer.closure(newValue, wrappedValue, .willSet) == .stop
@@ -41,26 +41,30 @@ public class KVO<KVOType> {
     
     private var keepEventState: Bool
     
-    fileprivate init(wrappedValue: KVOType, keepEventState: Bool = true) {
+    fileprivate init(wrappedValue: ValueType, keepEventState: Bool = true) {
         self.wrappedValue = wrappedValue
         self.keepEventState = keepEventState
     }
     
-    public convenience init(wrappedValue: KVOType) {
+    public convenience init(wrappedValue: ValueType) {
         self.init(wrappedValue: wrappedValue, keepEventState: true)
     }
     
     // MARK: observers
     
-    private var observers: [Observer<KVOType>] = []
+    public enum ObservingState {
+        case keep, stop
+    }
     
-    private final class Observer<_KVOType>: KVObserver {
+    private var observers: [Observer<ValueType>] = []
+    
+    private final class Observer<_ValueType>: ObserverProtocol {
         
         weak var propertyWrapper: KVO?
-        let options: KVObservingOptions
-        let closure: (_ newValue: _KVOType, _ oldValue: _KVOType, _ option: KVObservingOptions) -> KVObservingState
+        let options: ObservingOptions
+        let closure: (_ newValue: _ValueType, _ oldValue: _ValueType, _ option: ObservingOptions) -> ObservingState
         
-        init(propertyWrapper: KVO, options: KVObservingOptions, closure: @escaping (_ newValue: _KVOType, _ oldValue: _KVOType, _ option: KVObservingOptions) -> KVObservingState) {
+        init(propertyWrapper: KVO, options: ObservingOptions, closure: @escaping (_ newValue: _ValueType, _ oldValue: _ValueType, _ option: ObservingOptions) -> ObservingState) {
             self.propertyWrapper = propertyWrapper
             self.options = options
             self.closure = closure
@@ -76,7 +80,7 @@ public class KVO<KVOType> {
     }
     
     @discardableResult
-    public func addObserver(options: KVObservingOptions = .default, using closure: @escaping (_ newValue: KVOType, _ oldValue: KVOType, _ option: KVObservingOptions) -> KVObservingState) -> KVObserver {
+    public func addObserver(options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> ObservingState) -> ObserverProtocol {
         let observer = Observer(propertyWrapper: self, options: options, closure: closure)
         if !options.contains(.initial) || closure(wrappedValue, wrappedValue, .initial) == .keep {
             observers.append(observer)
@@ -84,72 +88,73 @@ public class KVO<KVOType> {
         return observer
     }
     
-    public func keepObserver(options: KVObservingOptions = .default, using closure: @escaping (_ newValue: KVOType, _ oldValue: KVOType, _ option: KVObservingOptions) -> Void) {
+    public func keepObserver(options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) {
         addObserver(options: options) { newValue, oldValue, option in
             closure(newValue, oldValue, option)
             return .keep
         }
     }
     
-    public func removeObserver(_ observer: KVObserver) {
+    public func removeObserver(_ observer: ObserverProtocol) {
         observers.removeAll { $0 === observer }
     }
 }
 
-// MARK: - event observer
+// MARK: - ExtKVO
 
 @propertyWrapper
-public final class EventObservable<KVOType>: KVO<KVOType> {
+public final class ExtKVO<ValueType>: KVO<ValueType> {
     
-    public override var projectedValue: EventObservable<KVOType> { self }
+    public override var projectedValue: ExtKVO<ValueType> { self }
     
-    public override var wrappedValue: KVOType {
+    public override var wrappedValue: ValueType {
         get { super.wrappedValue }
         set { super.wrappedValue = newValue }
     }
     
-    public override init(wrappedValue: KVOType, keepEventState: Bool = false) {
+    public override init(wrappedValue: ValueType, keepEventState: Bool = false) {
         super.init(wrappedValue: wrappedValue, keepEventState: keepEventState)
     }
     
-    public convenience init(wrappedValue: KVOType) {
+    public convenience init(wrappedValue: ValueType) {
         self.init(wrappedValue: wrappedValue, keepEventState: false)
     }
     
     @discardableResult
-    public func addObserver(using closure: @escaping (_ value: KVOType) -> KVObservingState) -> KVObserver {
-        return super.addObserver(options: .didSet) { value, oldValue, option -> KVObservingState in
+    public func addObserver(using closure: @escaping (_ value: ValueType) -> ObservingState) -> ObserverProtocol {
+        return super.addObserver(options: .didSet) { value, oldValue, option -> ObservingState in
             return closure(value)
         }
     }
     
-    public func keepObserver(using closure: @escaping (_ value: KVOType) -> Void) {
-        super.addObserver(options: .didSet) { value, oldValue, option -> KVObservingState in
+    public func keepObserver(using closure: @escaping (_ value: ValueType) -> Void) {
+        super.addObserver(options: .didSet) { value, oldValue, option -> ObservingState in
             closure(value)
             return .keep
         }
     }
     
     @available(*, unavailable)
-    public override func addObserver(options: KVObservingOptions = .default, using closure: @escaping (_ newValue: KVOType, _ oldValue: KVOType, _ option: KVObservingOptions) -> KVObservingState) -> KVObserver {
+    public override func addObserver(options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> ObservingState) -> ObserverProtocol {
         fatalError()
     }
     
     @available(*, unavailable)
-    public override func keepObserver(options: KVObservingOptions = .default, using closure: @escaping (_ newValue: KVOType, _ oldValue: KVOType, _ option: KVObservingOptions) -> Void) {
+    public override func keepObserver(options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) {
         fatalError()
     }
 }
 
-// MARK: -
+// MARK: - supports
 
-public struct KVObservingOptions: OptionSet, CustomStringConvertible {
+// when move into KVO: "Static stored properties not supported in generic types"
+public struct ObservingOptions: OptionSet, CustomStringConvertible {
     
-    public static let initial = KVObservingOptions(rawValue: 1 << 0) // value
-    public static let willSet = KVObservingOptions(rawValue: 1 << 1) // value + oldValue
-    public static let didSet  = KVObservingOptions(rawValue: 1 << 2) // value + oldValue
+    public static let initial = ObservingOptions(rawValue: 1 << 0) // value
+    public static let willSet = ObservingOptions(rawValue: 1 << 1) // value + oldValue
+    public static let didSet  = ObservingOptions(rawValue: 1 << 2) // value + oldValue
     
-    public static let `default`: KVObservingOptions = [.initial, .didSet]
+    public static let `default`: ObservingOptions = [.initial, .didSet]
     
     public let rawValue: Int
     public init(rawValue: Int) {
@@ -165,14 +170,7 @@ public struct KVObservingOptions: OptionSet, CustomStringConvertible {
     }
 }
 
-@objc // for mixing Swift&ObjC
-public enum KVObservingState: Int { case keep = 1, stop = 0 }
-
-// without @objc
-// public enum KVObservingState { case keep, stop }
-
-@objc // for Swift&ObjC mixed project
-public protocol KVObserver: AnyObject {
+public protocol ObserverProtocol: AnyObject {
     func isObserving() -> Bool
     func stopObserving()
 }

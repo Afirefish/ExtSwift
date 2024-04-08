@@ -23,10 +23,10 @@ class TestKVO {
         (self.i, self.s) = (i, s)
     }
     
-    @EventObservable
+    @ExtKVO
     var eventWithoutParameter: Void? = nil
     
-    @EventObservable(keepEventState: true)
+    @ExtKVO (keepEventState: true)
     var eventWithIntAndString: (i: Int, s: String)? = nil
 }
 
@@ -40,7 +40,7 @@ final class KVOTests: XCTestCase {
         
         // initialValue: Value?, newValue: Value, oldValue: Value
         
-        let kvObserver =
+        let observer =
             test.$i.addObserver { value, oldValue, option in
                 NSLog("Int - \(option): \(String(describing: oldValue)) <#->#> \(value)")
                 return .keep
@@ -65,7 +65,7 @@ final class KVOTests: XCTestCase {
         test.eventWithoutParameter = ()
         test.eventWithIntAndString = (1, "s")
         
-        kvObserver.stopObserving()
+        observer.stopObserving()
         test.i = 2
         
         eventObserver.stopObserving() // OR `test.$eventWithoutParameter.removeObserver(eventObserver)`
