@@ -57,7 +57,7 @@ Pod::Spec.new do |s|
         ss.dependency "ExtSwift/String+intIndex"
         ss.dependency "ExtSwift/tryIndex"
         ss.dependency "ExtSwift/Types"
-        ss.dependency "ExtSwift/WeakArray"
+        # ss.dependency "ExtSwift/WeakArray"
         ss.dependency "ExtSwift/UIKit"
     end
     
@@ -75,7 +75,6 @@ Pod::Spec.new do |s|
         ss.dependency "ExtSwift/Types"
         # ss.dependency "ExtSwift/WeakArray"
         ss.dependency "ExtSwift/UIKit"
-        # ss.dependency "ExtSwift/ESDiffableDataSource"
     end
     
     s.subspec "Unstable" do |ss|
@@ -89,7 +88,6 @@ Pod::Spec.new do |s|
     
     s.subspec "KVO" do |ss|
         ss.source_files  = "Sources/ExtSwift/**/KVO.swift"
-        ss.dependency "ExtSwift/WeakArray"
     end
     
     s.subspec "Mutable" do |ss|
@@ -125,21 +123,19 @@ Pod::Spec.new do |s|
         ss.source_files  = "Sources/ExtSwift/**/Types.swift"
     end
     
-    s.subspec "WeakArray" do |ss|
-        ss.source_files  = "Sources/ExtSwift/**/WeakArray.swift"
-    end
+    # s.subspec "WeakArray" do |ss|
+    #     ss.source_files  = "Sources/ExtSwift/**/WeakArray.swift"
+    # end
     
     s.subspec "UIKit" do |ss|
-        ss.source_files  = "Sources/ExtSwift/UIKit/*.swift"
+        ss.source_files  = [
+            "Sources/ExtSwift/UIKit/*.swift",
+            "Sources/ExtSwift/UIKit/ESDiffableDataSource/*.swift"
+        ]
         ss.dependency "ExtSwift/Mutable"
         ss.dependency "ExtSwift/NameSpace"
         ss.dependency "ExtSwift/tryIndex"
         ss.dependency "SnapKit", "~> 5.6"
-    end
-    
-    s.subspec "ESDiffableDataSource" do |ss|
-        ss.source_files  = "Sources/ExtSwift/UIKit/ESDiffableDataSource/*.swift"
-        ss.dependency "ExtSwift/tryIndex"
     end
     
 end
