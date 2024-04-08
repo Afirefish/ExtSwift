@@ -53,6 +53,7 @@ Pod::Spec.new do |s|
         ss.dependency "ExtSwift/NameSpace"
         ss.dependency "ExtSwift/nonEmpty"
         ss.dependency "ExtSwift/Operators"
+        ss.dependency "ExtSwift/Optional"
         ss.dependency "ExtSwift/SemanticVersion"
         ss.dependency "ExtSwift/String+intIndex"
         ss.dependency "ExtSwift/tryIndex"
@@ -107,6 +108,10 @@ Pod::Spec.new do |s|
         ss.dependency "ExtSwift/boolValue"
     end
     
+    s.subspec "Optional" do |ss|
+        ss.source_files  = "Sources/ExtSwift/**/Optional+opt.swift"
+    end
+    
     s.subspec "SemanticVersion" do |ss|
         ss.source_files  = "Sources/ExtSwift/**/SemanticVersion.swift"
     end
@@ -134,6 +139,7 @@ Pod::Spec.new do |s|
         ]
         ss.dependency "ExtSwift/Mutable"
         ss.dependency "ExtSwift/NameSpace"
+        ss.dependency "ExtSwift/Optional"
         ss.dependency "ExtSwift/tryIndex"
         ss.dependency "SnapKit", "~> 5.6"
     end
