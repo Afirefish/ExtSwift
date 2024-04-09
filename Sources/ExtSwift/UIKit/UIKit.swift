@@ -144,6 +144,7 @@ public extension UIImage {
     
     static func image(with color: UIColor, size: CGSize = CGSize(width: 1.0, height: 1.0)) -> UIImage? {
         let rect = CGRect(origin: .zero, size: size)
+        // https://developer.apple.com/documentation/uikit/uigraphicsimagerenderer
         return UIGraphicsImageRenderer(size: rect.size).image { context in
             color.setFill()
             context.fill(rect)
