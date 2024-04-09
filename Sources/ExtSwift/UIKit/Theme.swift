@@ -122,8 +122,8 @@ public extension UIView {
     }
     
     static func autoUpdateThemeWhenMovedToSuperview() {
-        guard let originalMethod = class_getInstanceMethod(Self.self, #selector(didMoveToSuperview)),
-              let swizzledMethod = class_getInstanceMethod(Self.self, #selector(_es_didMoveToSuperview)) else { return }
+        guard let originalMethod = class_getInstanceMethod(Self.self, #selector(UIView.didMoveToSuperview)),
+              let swizzledMethod = class_getInstanceMethod(Self.self, #selector(UIView._es_didMoveToSuperview)) else { return }
         method_exchangeImplementations(originalMethod, swizzledMethod)
     }
 }
