@@ -8,17 +8,17 @@
 
 import UIKit
 
-public class ESHitTestView: UIView {
+open class ESHitTestView: UIView {
     
-    public var hitTestClosure: ((UIView?, CGPoint, UIEvent?) -> UIView?)?
+    open var hitTestClosure: ((UIView?, CGPoint, UIEvent?) -> UIView?)?
     
     public init(hitTestClosure: ((UIView?, CGPoint, UIEvent?) -> UIView?)? = nil) {
         self.hitTestClosure = hitTestClosure
         super.init(frame: .zero)
     }
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    public required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
-    public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hitView = super.hitTest(point, with: event)
         if let hitTestClosure {
             return hitTestClosure(hitView, point, event)
