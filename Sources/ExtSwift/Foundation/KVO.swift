@@ -60,11 +60,13 @@ public class KVO<ValueType> {
     
     private final class Observer<_ValueType>: ObserverProtocol {
         
+        weak var observerAgent: ObserverAgent?
         weak var propertyWrapper: KVO?
         let options: ObservingOptions
         let closure: (_ newValue: _ValueType, _ oldValue: _ValueType, _ option: ObservingOptions) -> ObservingState
         
-        init(propertyWrapper: KVO, options: ObservingOptions, closure: @escaping (_ newValue: _ValueType, _ oldValue: _ValueType, _ option: ObservingOptions) -> ObservingState) {
+        init(observerAgent: ObserverAgent? = nil, propertyWrapper: KVO, options: ObservingOptions, closure: @escaping (_ newValue: _ValueType, _ oldValue: _ValueType, _ option: ObservingOptions) -> ObservingState) {
+            self.observerAgent = observerAgent
             self.propertyWrapper = propertyWrapper
             self.options = options
             self.closure = closure
@@ -75,28 +77,27 @@ public class KVO<ValueType> {
         }
         
         func stopObserving() {
-            propertyWrapper?.removeObserver(self)
+            observerAgent?.observers.removeAll { $0 === self }
+            propertyWrapper?.observers.removeAll { $0 === self }
         }
     }
     
     @discardableResult
-    public func addObserver(options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> ObservingState) -> ObserverProtocol {
-        let observer = Observer(propertyWrapper: self, options: options, closure: closure)
+    public func addObserver(_ agent: ObserverAgent? = nil, options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> ObservingState) -> ObserverProtocol {
+        let observer = Observer(observerAgent: agent, propertyWrapper: self, options: options, closure: closure)
         if !options.contains(.initial) || closure(wrappedValue, wrappedValue, .initial) == .keep {
             observers.append(observer)
         }
+        agent?.observers.append(observer)
         return observer
     }
     
-    public func keepObserver(options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) {
-        addObserver(options: options) { newValue, oldValue, option in
+    public func keepObserver(_ agent: ObserverAgent? = nil, options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) {
+        let observer = addObserver(agent, options: options) { newValue, oldValue, option in
             closure(newValue, oldValue, option)
             return .keep
         }
-    }
-    
-    public func removeObserver(_ observer: ObserverProtocol) {
-        observers.removeAll { $0 === observer }
+        agent?.observers.append(observer)
     }
 }
 
@@ -121,26 +122,26 @@ public final class ExtKVO<ValueType>: KVO<ValueType> {
     }
     
     @discardableResult
-    public func addObserver(using closure: @escaping (_ value: ValueType) -> ObservingState) -> ObserverProtocol {
-        return super.addObserver(options: .didSet) { value, oldValue, option -> ObservingState in
+    public func addObserver(_ agent: ObserverAgent? = nil, using closure: @escaping (_ value: ValueType) -> ObservingState) -> ObserverProtocol {
+        return super.addObserver(agent, options: .didSet) { value, oldValue, option -> ObservingState in
             return closure(value)
         }
     }
     
-    public func keepObserver(using closure: @escaping (_ value: ValueType) -> Void) {
-        super.addObserver(options: .didSet) { value, oldValue, option -> ObservingState in
+    public func keepObserver(_ agent: ObserverAgent? = nil, using closure: @escaping (_ value: ValueType) -> Void) {
+        super.addObserver(agent, options: .didSet) { value, oldValue, option -> ObservingState in
             closure(value)
             return .keep
         }
     }
     
     @available(*, unavailable)
-    public override func addObserver(options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> ObservingState) -> ObserverProtocol {
+    public override func addObserver(_ agent: ObserverAgent? = nil, options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> ObservingState) -> ObserverProtocol {
         fatalError()
     }
     
     @available(*, unavailable)
-    public override func keepObserver(options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) {
+    public override func keepObserver(_ agent: ObserverAgent? = nil, options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) {
         fatalError()
     }
 }
@@ -152,7 +153,7 @@ public struct ObservingOptions: OptionSet, CustomStringConvertible {
     
     public static let initial = ObservingOptions(rawValue: 1 << 0) // value
     public static let willSet = ObservingOptions(rawValue: 1 << 1) // value + oldValue
-    public static let didSet  = ObservingOptions(rawValue: 1 << 2) // value + oldValue
+    public static let  didSet = ObservingOptions(rawValue: 1 << 2) // value + oldValue
     
     public static let `default`: ObservingOptions = [.initial, .didSet]
     
@@ -173,4 +174,26 @@ public struct ObservingOptions: OptionSet, CustomStringConvertible {
 public protocol ObserverProtocol: AnyObject {
     func isObserving() -> Bool
     func stopObserving()
+}
+
+public final class ObserverAgent: ObserverProtocol {
+    
+    fileprivate var observers: [any ObserverProtocol] = []
+    
+    public init() {}
+    
+    public func isObserving() -> Bool {
+        return observers.contains { $0.isObserving() }
+    }
+    
+    public func stopObserving() {
+        for observer in observers {
+            observer.stopObserving()
+        }
+        observers.removeAll()
+    }
+    
+    deinit {
+        stopObserving()
+    }
 }

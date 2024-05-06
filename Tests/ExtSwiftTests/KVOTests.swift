@@ -34,41 +34,79 @@ class TestKVO {
 
 final class KVOTests: XCTestCase {
     
+    let observerAgent = ObserverAgent()
+    
     func testObservable() {
         
         let test: TestKVO! = TestKVO(i: 0, s: "")
         
+        XCTAssertFalse(observerAgent.isObserving())
+        
         // initialValue: Value?, newValue: Value, oldValue: Value
+        var i: ObservingOptions?,
+            s: ObservingOptions? = nil,
+            e1: ObservingOptions? = nil,
+            e2: ObservingOptions? = nil
+        XCTAssertEqual(i, nil)
+        XCTAssertEqual(s, nil)
+        XCTAssertEqual(e1, nil)
+        XCTAssertEqual(e2, nil)
         
         let observer =
-            test.$i.addObserver { value, oldValue, option in
-                NSLog("Int - \(option): \(String(describing: oldValue)) <#->#> \(value)")
-                return .keep
-            }
-        
-        test.$s.keepObserver(options: [.initial, .willSet, .didSet]) { value, oldValue, option in
-            NSLog("String - \(option): \(String(describing: oldValue)) <#->#> \(String(describing: value))")
-        }
-        
-        let eventObserver =
-        test.$eventWithoutParameter.addObserver { value in
-            NSLog("Void: <#->#> \(String(describing: value))")
+        test.$i.addObserver(observerAgent) { value, oldValue, option in
+            NSLog("Int - \(option): \(String(describing: oldValue)) <#->#> \(value)")
+            i = option
             return .keep
         }
+        XCTAssertEqual(i, .initial)
+        XCTAssertTrue(observerAgent.isObserving())
         
-        test.$eventWithIntAndString.keepObserver { value in
-            NSLog("(Int, String): <#->#> \(String(describing: value))")
+        test.$s.keepObserver(observerAgent, options: [.initial, .willSet, .didSet]) { value, oldValue, option in
+            NSLog("String - \(option): \(String(describing: oldValue)) <#->#> \(String(describing: value))")
+            s = option
         }
+        XCTAssertEqual(s, .initial)
+        
+        let eventObserver =
+        test.$eventWithoutParameter.addObserver(observerAgent) { value in
+            NSLog("Void: <#->#> \(String(describing: value))")
+            e1 = .didSet
+            return .keep
+        }
+        XCTAssertEqual(e1, nil)
+        
+        test.$eventWithIntAndString.keepObserver(observerAgent) { value in
+            NSLog("(Int, String): <#->#> \(String(describing: value))")
+            e2 = .didSet
+        }
+        XCTAssertEqual(e2, nil)
         
         test.i = 1
         test.s = nil
         test.eventWithoutParameter = ()
         test.eventWithIntAndString = (1, "s")
+        XCTAssertEqual(i, .didSet)
+        XCTAssertEqual(s, .didSet)
+        XCTAssertEqual(e1, .didSet)
+        XCTAssertEqual(e2, .didSet)
         
+        i = nil
         observer.stopObserving()
         test.i = 2
+        XCTAssertEqual(i, nil)
         
-        eventObserver.stopObserving() // OR `test.$eventWithoutParameter.removeObserver(eventObserver)`
+        e1 = nil
+        eventObserver.stopObserving() // OR `test.$eventWithoutParameter.removeObserver(eventObserver)`?
         test.eventWithoutParameter = nil
+        XCTAssertEqual(e1, nil)
+        
+        s = nil
+        e2 = nil
+        observerAgent.stopObserving()
+        XCTAssertFalse(observerAgent.isObserving())
+        test.s = nil
+        test.eventWithIntAndString = (1, "s")
+        XCTAssertEqual(s, nil)
+        XCTAssertEqual(e2, nil)
     }
 }
