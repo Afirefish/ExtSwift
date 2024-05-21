@@ -92,12 +92,13 @@ public class KVO<ValueType> {
         return observer
     }
     
-    public func keepObserver(_ agent: ObserverAgent? = nil, options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) {
+    public func keepObserver(_ agent: ObserverAgent? = nil, options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) -> ObserverProtocol {
         let observer = addObserver(agent, options: options) { newValue, oldValue, option in
             closure(newValue, oldValue, option)
             return .keep
         }
         agent?.observers.append(observer)
+        return observer
     }
 }
 
@@ -128,8 +129,8 @@ public final class ExtKVO<ValueType>: KVO<ValueType> {
         }
     }
     
-    public func keepObserver(_ agent: ObserverAgent? = nil, using closure: @escaping (_ value: ValueType) -> Void) {
-        super.addObserver(agent, options: .didSet) { value, oldValue, option -> ObservingState in
+    public func keepObserver(_ agent: ObserverAgent? = nil, using closure: @escaping (_ value: ValueType) -> Void) -> ObserverProtocol {
+        return super.addObserver(agent, options: .didSet) { value, oldValue, option -> ObservingState in
             closure(value)
             return .keep
         }
@@ -141,7 +142,7 @@ public final class ExtKVO<ValueType>: KVO<ValueType> {
     }
     
     @available(*, unavailable)
-    public override func keepObserver(_ agent: ObserverAgent? = nil, options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) {
+    public override func keepObserver(_ agent: ObserverAgent? = nil, options: ObservingOptions = .default, using closure: @escaping (_ newValue: ValueType, _ oldValue: ValueType, _ option: ObservingOptions) -> Void) -> ObserverProtocol {
         fatalError()
     }
 }

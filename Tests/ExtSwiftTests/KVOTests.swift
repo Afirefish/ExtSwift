@@ -61,7 +61,7 @@ final class KVOTests: XCTestCase {
         XCTAssertEqual(i, .initial)
         XCTAssertTrue(observerAgent.isObserving())
         
-        test.$s.keepObserver(observerAgent, options: [.initial, .willSet, .didSet]) { value, oldValue, option in
+        _ = test.$s.keepObserver(observerAgent, options: [.initial, .willSet, .didSet]) { value, oldValue, option in
             NSLog("String - \(option): \(String(describing: oldValue)) <#->#> \(String(describing: value))")
             s = option
         }
@@ -75,7 +75,7 @@ final class KVOTests: XCTestCase {
         }
         XCTAssertEqual(e1, nil)
         
-        test.$eventWithIntAndString.keepObserver(observerAgent) { value in
+        _ = test.$eventWithIntAndString.keepObserver(observerAgent) { value in
             NSLog("(Int, String): <#->#> \(String(describing: value))")
             e2 = .didSet
         }
